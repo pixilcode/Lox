@@ -1,0 +1,170 @@
+import "collections/List";
+
+class TestCase {
+	
+	init(method) {
+		this.method = method;
+	}
+	
+	setUp() {}
+
+	run(result) {
+		this.setUp();
+		
+		try {
+			result.testStarted(this.method);
+			var method = getProperty(this, this.method);
+			method();
+		} catch(RuntimeError error) {
+			result.testFailed(this.method, error);
+		} finally {
+			this.tearDown();
+		}
+	}
+	
+	tearDown() {}
+	
+	assert(statement) {
+		if(statement)
+			return;
+		else
+			throw AssertionError(this.method);
+	}
+	
+	assertEqual(obj1, obj2) {
+		this.assert(obj1 == obj2);
+	}
+	
+	fail() {
+		throw Failure(this.method);
+	}
+	
+}
+
+class TestSuite {
+	
+	init(testClass) {
+		this.testClass = testClass;
+		this.tests = List();
+	}
+	
+	add(test) {
+		this.tests.add(this.testClass(test));
+	}
+	
+	run(result) { 
+		
+		this.tests.forEach(|test| {
+			test.run(result);
+		});
+		
+	}
+	
+}
+
+class TestResult {
+	
+	init(name) {
+		this.success = List();
+		this.failure = List();
+		this.name = name;
+		this.runCount = 0;
+		this.errorCount = 0;
+	}
+	
+	testStarted(testName) {
+		this.success.add(testName);
+		this.runCount = this.runCount + 1;
+	}
+	
+	testFailed(testName, error) {
+		this.success.removeValue(testName);
+		this.failure.add(Cause(testName, error));
+		this.errorCount = this.errorCount + 1;
+	}
+	
+	summary() {
+		return this.name + ": " +
+			this.runCount + " run, " +
+			this.errorCount + " failed";
+	}
+	
+	verboseSummary() {
+		
+		var summary = this.summary();
+		
+		fn reducer(val, reducer) {
+			return reducer + "\n\t\t" + val;
+		}
+		
+		// Successes
+		if(!this.success.isEmpty()) {
+			
+			summary = summary + "\n\tSuccesses";
+			summary = this.success.reduce(reducer, summary);
+				
+		}
+		
+		//Failures
+		if(!this.failure.isEmpty()) {
+			
+			summary = summary + "\n\tFailures";
+			summary = this.failure.reduce(reducer, summary);
+			
+		}
+		
+		return summary + "\n";
+		
+	}
+	
+	toString() {
+		return this.verboseSummary();
+	}
+	
+}
+
+class Cause {
+	
+	init(name, error) {
+		this.name = name;
+		this.error = error;
+	}
+	
+	toString() {
+		return this.name + ": " + this.error.message();
+	}
+	
+}
+
+class AssertionError < RuntimeError {
+	
+	init(location) {
+		this.location = location;
+	}
+	
+	message() {
+		return "Assertion failed at " + this.location;
+	}
+	
+	getType() {
+		return "AssertionError";
+	}
+	
+}
+
+class Failure < RuntimeError {
+	
+	init(method) {
+		this.method = method;
+	}
+	
+	message() {
+		return this.method + " failed";
+	}
+	
+	getType() {
+		return "Failure";
+	}
+	
+}
+

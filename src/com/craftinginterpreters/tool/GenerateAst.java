@@ -1,0 +1,127 @@
+package com.craftinginterpreters.tool;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.List;
+
+public class GenerateAst {
+	
+	public static void main(String[] args) throws IOException {
+		if(args.length != 1) {
+			System.err.println("Usage: generate_ast <output directory>");
+			System.exit(1);
+		}
+		String outputDir = args[0];
+		
+		defineAst(outputDir, "Expr", Arrays.asList(
+				  "Assign   : Token name, Expr value",
+			      "Binary   : Expr left, Token operator, Expr right",
+			      "Call     : Expr callee, Token paren, List<Expr> arguments",
+			      "Get      : Expr object, Token name",
+			      "Grouping : Expr expression",
+			      "Lambda   : Token start, List<Token> parameters, List<Stmt> body",
+			      "Literal  : Object value",
+			      "Logical  : Expr left, Token operator, Expr right",
+			      "Set      : Expr object, Token name, Expr value",
+			      "Super    : Token keyword, Token method",
+			      "This     : Token keyword",
+			      "Unary    : Token operator, Expr right",
+			      "Variable : Token name"
+			    ));
+		defineAst(outputDir, "Stmt", Arrays.asList(
+				  "Block      : List<Stmt> statements",
+				  "Catch      : Token keyword, List<Token> errors, Token identifier, Stmt body",
+				  "Class      : Token name, Expr.Variable superclass, List<Stmt.Function> methods",
+				  "Exit       : Token keyword, Expr exitCode",
+				  "Expression : Expr expression",
+			      "Function   : Token name, List<Token> parameters, List<Stmt> body",
+			      "If         : Token keyword, Expr condition, Stmt thenBranch, Stmt elseBranch",
+			      "Import     : Token keyword, String file, List<Stmt> body",
+			      "Include    : Token keyword, String file, List<Stmt> body",
+			      "Print      : Token keyword, Expr expression",
+			      "Return     : Token keyword, Expr value",
+			      "Throw      : Token keyword, Expr thrown",
+			      "Try        : Token keyword, Stmt body, List<Stmt.Catch> catches, Stmt finallyStmt",
+			      "Var        : Token name, Expr initializer",
+			      "While      : Token keyword, Expr condition, Stmt body"
+			    ));
+		
+	}
+	
+	private static void defineAst(String outputDir, String baseName, List<String> types) throws IOException {
+		
+		String path = outputDir + "/" + baseName + ".java";
+		PrintWriter writer = new PrintWriter(path, "UTF-8");
+		
+		writer.println("package com.craftinginterpreters.lox;");
+		writer.println("");
+		writer.println("import java.util.List;");
+		writer.println("");
+		writer.println("public abstract class " + baseName + " {");
+		
+		defineVisitor(writer, baseName, types);
+		
+		// The AST classes
+		for(String type : types) {
+			String className = type.split(":")[0].trim();
+			String fields = type.split(":")[1].trim();
+			defineType(writer, baseName, className, fields);
+		}
+		
+		// The base accept() method.
+		writer.println("");
+		writer.println("\tabstract <R> R accept(Visitor<R> visitor);");
+		
+		writer.println("}");
+		writer.close();
+		
+	}
+	
+	private static void defineVisitor(PrintWriter writer, String baseName, List<String> types) {
+		
+		writer.println("\tinterface Visitor<R> {");
+		
+		for(String type : types) {
+			String typeName = type.split(":")[0].trim();
+			writer.println("\t\tR visit" + typeName + baseName + "(" + typeName + " " + baseName.toLowerCase() + ");");
+		}
+		
+		writer.println("\t}");
+	}
+	
+	private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
+		
+		writer.println("\tstatic class " + className + " extends " + baseName + " {");
+		
+		// Fields
+		String[] fields = fieldList.split(", ");
+		writer.println();
+		for(String field : fields) {
+			writer.println("\t\tfinal " + field + ";");
+		}
+		
+		// Constructor
+		writer.println();
+		writer.println("\t\t" + className + "(" + fieldList + ") {");
+		
+		// Store parameters in fields
+		for(String field : fields) {
+			String name = field.split(" ")[1];
+			writer.println("\t\t\tthis." + name + " = " + name + ";");
+		}
+		
+		writer.println("\t\t}");
+		
+		// Visitor pattern.
+		writer.println();
+		writer.println("\t\t<R> R accept(Visitor<R> visitor) {");
+		writer.println("\t\t\treturn visitor.visit" + className + baseName + "(this);");
+		writer.println("\t\t}");
+		
+		writer.println();
+		writer.println("\t}");
+		
+	}
+	
+}

@@ -1,0 +1,263 @@
+// TODO Make a Map, Set
+// TODO Add operator overriding
+// TODO Add array capabilities
+// TODO Add static methods
+// TODO Check to see if 'this.<property> = <value>'
+//      overwrites declared method
+// TODO Check to see if 'var <name> = <value>'
+//      overwrites parameters
+// TODO Make partial application possible
+//      (ex: with fn a(param1, param2),
+//      do var x = a(_, val2) and get back
+//      a fn that has val2 baked in as param2
+//      and can be called as x(val1) )
+// TODO Add string functions such as length(string),
+//      substring(string, int, int)
+// TODO Add file to track predefined functions and generate java file
+
+class List {
+	
+	init() {
+		this.head = nil;
+		this.tail = nil;
+		this.size = 0;
+	}
+	
+	add(value) {
+		
+		if(this.size == 0) {
+			this.head = ListNode(value, nil, nil);
+			this.tail = this.head;
+		} else {
+			var node = ListNode(value, nil, nil);
+			this.tail.setNext(node);
+			this.tail = node;
+		}
+		
+		this.size = this.size + 1;
+		
+	}
+	
+	get(index) {
+		
+		return this.getNode(index).getValue();
+		
+	}
+	
+	remove(index) {
+		
+		var node = this.getNode(index);
+		
+		return this.removeNode(node).getValue();
+		
+	}
+	
+	removeValue(value) {
+		
+		var iter = this.iterator();
+		while(iter.hasNext()) {
+			if(iter.next() == value)
+				return this.removeNode(iter.currNode()).getValue();
+		}
+		
+		return nil;
+		
+	}
+	
+	removeNode(node) {
+		
+		if(node == this.head and node == this.tail) {
+			this.head = nil;
+			this.tail = nil;
+		} else if(node == this.head) {
+			this.head = this.head.getNext();
+			this.head.removePrevious();
+		} else if(node == this.tail) {
+			this.tail = this.tail.getPrevious();
+			this.tail.removeNext();
+		} else {
+			node.getPrevious().setNext(node.getNext());
+		}
+		
+		this.size = this.size - 1;
+		
+		return node;
+		
+	}
+	
+	forEach(fun) {
+		
+		var iter = this.iterator();
+		while(iter.hasNext()) {
+			var val = fun(iter.next());
+			if(val != nil) return val;
+		}
+			
+	}
+	
+	map(fun) {
+		
+		var result = List();
+		
+		this.forEach(|val| {
+			result.add(fun(val));
+		});
+		
+		return result;
+		
+	}
+	
+	filter(fun) {
+		
+		var result = List();
+		
+		this.forEach(|val| {
+			if(fun(val)) result.add(val);
+		});
+		
+		return result;
+		
+	}
+	
+	reduce(fun, reducer) {
+		
+		this.forEach(|val| {
+			reducer = fun(val, reducer);
+		});
+		
+		return reducer;
+		
+	}
+	
+	indexOf(value) {
+		
+		var currIndex = 0;
+		
+		fn determineIndex(val) {
+			if(val == value)
+				return currIndex;
+			currIndex = currIndex + 1;
+		}
+		
+		var index = this.forEach(determineIndex);
+		
+		if(index != nil)
+			return index;
+		
+		return -1;
+		
+	}
+	
+	// TODO Check for ArrayOutOfBoundsError
+	// TODO Start at tail and move backwards
+	//      if index > (size / 2)
+	
+	getNode(index) {
+		var node = this.head;
+		for(var i = 0; i < index; i = i + 1)
+			node = node.getNext();
+		return node;
+	}
+		
+	getSize() {
+		return this.size;
+	}
+	
+	isEmpty() {
+		return (this.head == nil);
+	}
+	
+	iterator() {
+		return ListIterator(this.head);
+	}
+	
+	toString() {
+		
+		var node = this.head;
+		var string = "{ ";
+		
+		if(this.head != nil) {
+			string = string + this.head;
+			node = node.getNext();
+		}
+		
+		while(node != nil) {
+			string = string + ", " + node;
+			node = node.getNext();
+		}
+		
+		string = string + " }";
+		
+		return string;
+		
+	}
+}
+
+var list = List();
+
+class ListNode {
+	
+	init(value, previous, next) {
+		this.value = value;
+		this.previous = previous;
+		this.next = next;
+	}
+	
+	getValue() {
+		return this.value;
+	}
+	
+	removePrevious() {
+		this.previous.next = nil;
+		this.previous = nil;
+	}
+	
+	getPrevious() {
+		return this.previous;
+	}
+	
+	setNext(next) {
+		this.next = next;
+		next.previous = this;
+	}
+	
+	removeNext() {
+		this.next.previous = nil;
+		this.next = nil;
+	}
+	
+	getNext() {
+		return this.next;
+	}
+	
+	toString() {
+		return this.value;
+	}
+	
+}
+
+class ListIterator {
+	
+	init(head) {
+		this.curr = nil;
+		this.nextNode = head;
+	}
+	
+	hasNext() {
+		return this.nextNode != nil;
+	}
+	
+	next() {
+		this.curr = this.nextNode;
+		if(this.nextNode != nil) {
+			this.nextNode = this.nextNode.getNext();
+			return this.curr.getValue();
+		}
+		return nil;
+	}
+	
+	currNode() {
+		return this.curr;
+	}
+	
+}

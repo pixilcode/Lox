@@ -1,0 +1,1 @@
+java -cp /home/dragonfire/eclipse-java/Lox/bin/ com.craftinginterpreters.lox.Lox "$@"

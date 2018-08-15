@@ -1,0 +1,160 @@
+import "test/TestCase";
+import "collections/List";
+
+class ListTest < TestCase {
+	
+	setUp() {
+		this.list = List();
+		this.list.add("hello");
+		this.list.add("world");
+		this.list.add("!");
+	}
+	
+	testListNode() {
+		var head = ListNode("hello", nil, nil);
+		var next = ListNode("world", nil, nil);
+		head.setNext(next);
+		this.assert(next == head.getNext());
+		this.assert(head == next.getPrevious());
+		this.assert("hello" == head.toString());
+	}
+	
+	testGetFromList() {
+		this.assertEqual("hello", this.list.get(0));
+		this.assertEqual("world", this.list.get(1));
+	}
+	
+	testSetAndRemove() {
+		
+		// "hello", "world", "!"
+		this.assertEqual("hello", this.list.remove(0)); // "world", "!"
+		this.assertEqual("!", this.list.remove(1)); // "world"
+		this.assertEqual(1, this.list.getSize());
+		
+	}
+	
+	testListIterator() {
+		
+		var iterator = this.list.iterator();
+		var string = "";
+		
+		while(iterator.hasNext())
+			string = string + iterator.next() + " ";
+		
+		this.assertEqual("hello world ! ", string);
+		
+		this.list = List();
+		this.list.add(1);
+		this.list.add(2);
+		this.list.add(3);
+		
+		iterator = this.list.iterator();
+		var sum = 0;
+		
+		while(iterator.hasNext())
+			sum = sum + iterator.next();
+		
+		this.assertEqual(6, sum);
+		
+	}
+	
+	testIndexOf() {
+		this.assertEqual(1, this.list.indexOf("world"));
+		this.assertEqual(-1, this.list.indexOf("notInList"));
+		this.list = List();
+		this.assertEqual(-1, this.list.indexOf("world"));
+	}
+	
+	testRemoveValue() {
+		this.assertEqual("hello", this.list.removeValue("hello"));
+	}
+	
+	testRemoveOnlyValueInList() {
+		
+		var list = List();
+		list.add("hello");
+		list.removeValue("hello");
+		
+		list.add("hello");
+		list.remove(0);
+		
+	}
+	
+	testForEach() {
+		
+		var result = List();
+		
+		fn appendExclamation(str) { result.add(str + "!"); }
+		this.list.forEach(appendExclamation);
+		
+		this.assertEqual("hello!", result.get(0));
+		this.assertEqual("world!", result.get(1));
+		this.assertEqual("!!", result.get(2));
+		
+	}
+	
+	testForEachReturn() {
+		
+		fn test(val) {
+			if(val == "world")
+				return "success";
+		}
+		
+		var result = this.list.forEach(test);
+		
+		this.assertEqual("success", result);
+		
+	}
+	
+	testMap() {
+		
+		var list = List();
+		list.add(1);
+		
+		fn addOne(num) { return num+1; }
+		var result = list.map(addOne);
+		
+		this.assertEqual(1+1, result.get(0));
+		
+	}
+	
+	testFilter() {
+		
+		fn filter(val) { return val != "hello"; }
+		var result = this.list.filter(filter);
+		
+		this.assertEqual(2, result.getSize());
+		this.assertEqual("world", result.get(0));
+		
+	}
+	
+	testReduce() {
+		
+		fn reduce(val, reducer) { return reducer + val + " "; }
+		var result = this.list.reduce(reduce, "");
+		
+		this.assertEqual("hello world ! ", result);
+		
+	}
+
+}
+
+var suite = TestSuite(ListTest);
+
+suite.add("testListNode");
+suite.add("testGetFromList");
+suite.add("testSetAndRemove");
+suite.add("testListIterator");
+suite.add("testIndexOf");
+suite.add("testRemoveValue");
+suite.add("testRemoveOnlyValueInList");
+suite.add("testForEach");
+suite.add("testForEachReturn");
+suite.add("testMap");
+suite.add("testFilter");
+suite.add("testReduce");
+
+var result = TestResult("List Tests");
+suite.run(result);
+
+println(result);

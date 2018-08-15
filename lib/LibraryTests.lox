@@ -1,0 +1,2 @@
+include "test/TestTests";
+include "collections/CollectionsTests";

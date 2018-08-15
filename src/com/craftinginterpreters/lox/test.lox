@@ -1,0 +1,4 @@
+fn a(b) {
+	var b = 0;
+	"expect a warning about overwriting function parameter";
+}

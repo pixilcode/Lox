@@ -1,0 +1,155 @@
+import "test/TestCase";
+
+// TODO TestSuite makes use of classes so
+//      user doesn't have to do
+//      add(Class("name")) every time
+
+class TestCaseTest < TestCase {
+	
+	setUp() {
+		this.test = WasRun("testMethod");
+	}
+		
+	testTemplateMethod() {
+		this.test.run(TestResult("testMethod"));
+		this.assertEqual("setUp testMethod tearDown ", this.test.log);
+	}
+	
+	testResult() {
+		var result = TestResult("testMethod");
+		this.test.run(result);
+		this.assertEqual("testMethod: 1 run, 0 failed", result.summary());
+	}
+	
+	testFailedResult() {
+		var result = TestResult("testBrokenMethod");
+		var test = WasRun("testBrokenMethod");
+		test.run(result);
+		this.assertEqual("testBrokenMethod: 1 run, 1 failed", result.summary());
+	}
+	
+	testFailedResultFormatting() {
+		var result = TestResult("testFailedResultFormatting");
+		result.testStarted("testBrokenMethod");
+		result.testFailed("testBrokenMethod", RuntimeError());
+		this.assertEqual("testFailedResultFormatting: 1 run, 1 failed", result.summary());
+	}
+	
+	testSuite() {
+		
+		var suite = TestSuite(WasRun);
+		suite.add("testMethod");
+		suite.add("testBrokenMethod");
+		
+		var result = TestResult("testTestSuite");
+		suite.run(result);
+		
+		this.assertEqual("testTestSuite: 2 run, 1 failed", result.summary());
+		
+	}
+	
+	testResultVerboseSummary() {
+		
+		var suite = TestSuite(WasRun);
+		suite.add("testMethod");
+		suite.add("testBrokenMethod");
+		
+		var result = TestResult("testVerbose");
+		suite.run(result);
+		
+		var verboseSummary = 	"testVerbose: 2 run, 1 failed" +
+								"\n\tSuccesses" +
+								"\n\t\ttestMethod" +
+								"\n\tFailures" +
+								"\n\t\ttestBrokenMethod: No message defined" +
+								"\n";
+		
+		this.assertEqual(verboseSummary, result.verboseSummary());
+		
+		suite = TestSuite(WasRun);
+		suite.add("testMethod");
+		
+		result = TestResult("testVerbose");
+		suite.run(result);
+		
+		verboseSummary = 		"testVerbose: 1 run, 0 failed" +
+								"\n\tSuccesses" +
+								"\n\t\ttestMethod" +
+								"\n";
+		
+		this.assertEqual(verboseSummary, result.verboseSummary());
+		
+		suite = TestSuite(WasRun);
+		suite.add("testBrokenMethod");
+		
+		result = TestResult("testVerbose");
+		suite.run(result);
+		
+		verboseSummary = 		"testVerbose: 1 run, 1 failed" +
+								"\n\tFailures" +
+								"\n\t\ttestBrokenMethod: No message defined" +
+								"\n";
+		
+		this.assertEqual(verboseSummary, result.verboseSummary());
+		
+	}
+	
+	testAssert() {
+		this.assert(true);
+	}
+	
+	testAssertEqual() {
+		this.assertEqual(1, 1);
+	}
+	
+	testFail() {
+		
+		try {
+			this.fail();
+		} catch(Failure failure) {
+			return;
+		}
+		
+		this.fail();
+		
+	}
+	
+}
+
+class WasRun < TestCase {
+	
+	setUp() {
+		this.log = "setUp ";
+	}
+	
+	testMethod() {
+		this.log = this.log + "testMethod ";
+	}
+	
+	testBrokenMethod() {
+		throw RuntimeError();
+	}
+	
+	tearDown() {
+		this.log = this.log + "tearDown ";
+	}
+	
+}
+
+var suite = TestSuite(TestCaseTest);
+
+suite.add("testTemplateMethod");
+suite.add("testResult");
+suite.add("testFailedResultFormatting");
+suite.add("testFailedResult");
+suite.add("testSuite");
+suite.add("testResultVerboseSummary");
+suite.add("testAssert");
+suite.add("testAssertEqual");
+suite.add("testFail");
+
+var result = TestResult("TestCase Tests");
+suite.run(result);
+
+println(result);
+
